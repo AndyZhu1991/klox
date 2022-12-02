@@ -17,9 +17,6 @@ fun main(args: Array<String>) {
 
 class Lox {
 
-    private var hadError = false
-
-
     fun runFile(path: String) {
         // Read the file
         val bytes = Files.readAllBytes(Paths.get(path))
@@ -27,6 +24,7 @@ class Lox {
 
         // Indicate an error in the exit code.
         if (hadError) exitProcess(65)
+        if (hadRuntimeError) exitProcess(70)
     }
 
 
@@ -46,10 +44,9 @@ class Lox {
     private fun run(source: String) {
         val scanner = Scanner(source)
         val tokens = scanner.tokens
-
-        for (token in tokens) {
-            println(token)
-        }
+        if (hadError) return
+        val expr = Parser(tokens).parse() ?: return
+        interpreter.interpret(expr)
     }
 
 
@@ -65,6 +62,11 @@ class Lox {
 
 
     companion object {
+        private val interpreter = Interpreter()
+
+        private var hadError = false
+        private var hadRuntimeError = false
+
         fun error(line: Int, msg: String) {
         }
 
@@ -77,6 +79,11 @@ class Lox {
         }
 
         fun report(line: Int, position: String, message: String) {
+        }
+
+        fun runtimeError(error: RuntimeError) {
+            System.err.println("${error.message}\n[line ${error.token.line}]")
+            hadRuntimeError = true
         }
     }
 }

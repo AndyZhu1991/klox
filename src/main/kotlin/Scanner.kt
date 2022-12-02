@@ -149,6 +149,7 @@ class Scanner {
             }
         }
 
+        tokens.add(Token(EOF, "", null, line))
         return tokens
     }
 }

@@ -19,11 +19,22 @@ data class Binary(
     val right: Expr,
 ): Expr()
 
+data class Variable(
+    val name: Token,
+): Expr()
+
+data class Assign(
+    val name: Token,
+    val value: Expr,
+): Expr()
+
 interface ExprVisitor<R> {
     fun visitLiteral(expr: Literal): R
     fun visitGrouping(expr: Grouping): R
     fun visitUnary(expr: Unary): R
     fun visitBinary(expr: Binary): R
+    fun visitVariable(expr: Variable): R
+    fun visitAssignExpr(expr: Assign): R
 }
 
 fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
@@ -32,5 +43,7 @@ fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
         is Binary -> visitor.visitBinary(expr)
         is Grouping -> visitor.visitGrouping(expr)
         is Unary -> visitor.visitUnary(expr)
+        is Variable -> visitor.visitVariable(expr)
+        is Assign -> visitor.visitAssignExpr(expr)
     }
 }

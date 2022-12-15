@@ -5,15 +5,77 @@ class Parser(
 ) {
     private var current = 0
 
-    fun parse(): Expr? {
+    fun parse(): List<Stmt> {
+        return mutableListOf<Stmt>().apply {
+            while (!isAtEnd()) {
+                declaration()?.let(::add)
+            }
+        }
+    }
+
+    private fun expression() = assignment()
+
+    private fun statement(): Stmt {
+        if (match(PRINT)) return printStatement()
+
+        return expressionStatement()
+    }
+
+    private fun declaration(): Stmt? {
         return try {
-            expression()
-        } catch (e: Exception) {
+            if (match(VAR)) varDeclaration() else statement()
+        } catch (error: ParserError) {
+            synchronize()
             null
         }
     }
 
-    private fun expression() = equality()
+    private fun varDeclaration(): Stmt.Var {
+        val name = consume(IDENTIFIER, "Expect variable name.")
+        val initializer = if (match(EQUAL)) expression() else null
+        consume(SEMICOLON, "Expect ';' after variable declaration.")
+        return Stmt.Var(name, initializer)
+    }
+
+    private fun printStatement(): Stmt {
+        val expr = expression()
+        consume(SEMICOLON, "Expect ';' after value.")
+        return Stmt.Print(expr)
+    }
+
+    private fun expressionStatement(): Stmt {
+        val expr = expression()
+        consume(SEMICOLON, "Expect ';' after expression.")
+        return Stmt.Expression(expr)
+    }
+
+    private fun assignment(): Expr {
+        val expr = equality()
+
+        if (match(EQUAL)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expr is Variable) {
+                return Assign(expr.name, value)
+            }
+
+            error(equals, "Invalid assigment target.")
+        }
+
+        return expr
+    }
+
+    private fun block(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            declaration()?.let { statements.add(it) }
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.")
+        return statements
+    }
 
     private fun equality(): Expr {
         var expr = comparison()
@@ -80,6 +142,10 @@ class Parser(
 
         if (match(NUMBER, STRING)) {
             return Literal(previous().literal)
+        }
+
+        if (match(IDENTIFIER)) {
+            return Variable(previous())
         }
 
         if (match(LEFT_PAREN)) {

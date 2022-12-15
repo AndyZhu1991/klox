@@ -1,14 +1,19 @@
 import TokenType.*
 
-class Interpreter : ExprVisitor<Any?> {
+class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
 
-    fun interpret(expr: Expr) {
+    private var environment = Environment()
+
+    fun interpret(stmts: List<Stmt>) {
         try {
-            val result = evaluate(expr)
-            println(stringify(result))
+            stmts.forEach(::execute)
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
         }
+    }
+
+    private fun execute(stmt: Stmt) {
+        visitStmt(stmt, this)
     }
 
     private fun evaluate(expr: Expr): Any? {
@@ -92,6 +97,39 @@ class Interpreter : ExprVisitor<Any?> {
         }
     }
 
+    override fun visitAssignExpr(expr: Assign): Any? {
+        val value = evaluate(expr.value)
+        environment.assign(expr.name, value)
+        return value
+    }
+
+    override fun visitVariable(expr: Variable): Any? {
+        return environment.get(expr.name)
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val result = evaluate(stmt.expr)
+        println(stringify(result))
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expr)
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        val value = stmt.initializer?.let { evaluate(it) }
+        environment.define(stmt.name.lexeme, value)
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        pushEnviroment()
+        try {
+            stmt.stmts.forEach(::execute)
+        } finally {
+            popEnviroment()
+        }
+    }
+
     private fun checkNumberOperand(operator: Token, operand: Any?) {
         if (operand is Double) return
         throw RuntimeError(operator, "Operand must be a number.")
@@ -115,5 +153,13 @@ class Interpreter : ExprVisitor<Any?> {
         }
 
         return obj.toString()
+    }
+
+    private fun pushEnviroment() {
+        this.environment = Environment(this.environment)
+    }
+
+    private fun popEnviroment() {
+        this.environment = this.environment.enclosing!!
     }
 }

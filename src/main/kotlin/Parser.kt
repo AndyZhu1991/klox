@@ -17,6 +17,10 @@ class Parser(
 
     private fun statement(): Stmt {
         if (match(PRINT)) return printStatement()
+        if (match(FOR)) return forStatement()
+        if (match(IF)) return ifStatement()
+        if (match(WHILE)) return whileStatement()
+        if (match(LEFT_BRACE)) return Stmt.Block(block())
 
         return expressionStatement()
     }
@@ -41,6 +45,64 @@ class Parser(
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after value.")
         return Stmt.Print(expr)
+    }
+
+    private fun ifStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        val elseBranch = if (match(ELSE)) statement() else null
+
+        return Stmt.If(condition, thenBranch, elseBranch)
+    }
+
+    private fun whileStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after condition.")
+        val body = statement()
+        return Stmt.While(condition, body)
+    }
+
+    private fun forStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+        val initializer = if (match(SEMICOLON)) {
+            Stmt.Empty
+        } else if (match(VAR)) {
+            varDeclaration()
+        } else {
+            expressionStatement()
+        }
+
+        val condition = if (!check(SEMICOLON)) {
+            expression()
+        } else {
+            Literal(true)
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        val increment = if (!check(RIGHT_PAREN)) {
+            Stmt.Expression(expression())
+        } else {
+            Stmt.Empty
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        val body = statement()
+
+        return Stmt.Block(listOf(
+            initializer,
+            Stmt.While(
+                condition,
+                Stmt.Block(listOf(
+                    body,
+                    increment,
+                ))
+            )
+        ))
     }
 
     private fun expressionStatement(): Stmt {
@@ -154,6 +216,30 @@ class Parser(
             return Grouping(expr)
         }
         throw error(peek(), "Expect expression.")
+    }
+
+    private fun or(): Expr {
+        var expr = and()
+
+        while (match(OR)) {
+            val operator = previous()
+            val right = and()
+            expr = Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun and(): Expr {
+        var expr = equality()
+
+        while (match(AND)) {
+            val operator = previous()
+            val right = equality()
+            expr = Logical(expr, operator, right)
+        }
+
+        return expr
     }
 
     private fun consume(type: TokenType, message: String): Token {

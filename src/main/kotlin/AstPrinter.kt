@@ -31,6 +31,10 @@ object PrintVisitor: ExprVisitor<String> {
                 exprs.joinToString(separator = " ") { visitExpr(it, this) } +
                 ")"
     }
+
+    override fun visitLogicalExpr(expr: Logical): String {
+        TODO("Not yet implemented")
+    }
 }
 
 fun main(args: Array<String>) {

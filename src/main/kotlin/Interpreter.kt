@@ -107,6 +107,16 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         return environment.get(expr.name)
     }
 
+    override fun visitLogicalExpr(expr: Logical): Any? {
+        return when (expr.operator.type) {
+            OR  -> return isTruthy(evaluate(expr.left)) || isTruthy(evaluate(expr.right))
+            AND -> return isTruthy(evaluate(expr.left)) && isTruthy(evaluate(expr.right))
+            else -> null
+        }
+    }
+
+    override fun visitEmptyStmt(stmt: Stmt.Empty) = Unit
+
     override fun visitPrintStmt(stmt: Stmt.Print) {
         val result = evaluate(stmt.expr)
         println(stringify(result))
@@ -127,6 +137,20 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
             stmt.stmts.forEach(::execute)
         } finally {
             popEnviroment()
+        }
+    }
+
+    override fun visitIfStmt(stmt: Stmt.If) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch)
+        } else {
+            stmt.elseBranch?.let { execute(it) }
+        }
+    }
+
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body)
         }
     }
 

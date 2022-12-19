@@ -1,27 +1,27 @@
 
 
 object PrintVisitor: ExprVisitor<String> {
-    override fun visitLiteral(expr: Literal): String {
+    override fun visitLiteral(expr: Expr.Literal): String {
         return if (expr.value == null) "nil" else expr.value.toString()
     }
 
-    override fun visitGrouping(expr: Grouping): String {
+    override fun visitGrouping(expr: Expr.Grouping): String {
         return parenthesize("group", expr.expression)
     }
 
-    override fun visitUnary(expr: Unary): String {
+    override fun visitUnary(expr: Expr.Unary): String {
         return parenthesize(expr.operator.lexeme, expr.right)
     }
 
-    override fun visitBinary(expr: Binary): String {
+    override fun visitBinary(expr: Expr.Binary): String {
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     }
 
-    override fun visitVariable(expr: Variable): String {
+    override fun visitVariable(expr: Expr.Variable): String {
         return expr.name.lexeme
     }
 
-    override fun visitAssignExpr(expr: Assign): String {
+    override fun visitAssignExpr(expr: Expr.Assign): String {
         return "(Assign ${expr.value} to ${expr.name.lexeme})"
     }
 
@@ -32,20 +32,20 @@ object PrintVisitor: ExprVisitor<String> {
                 ")"
     }
 
-    override fun visitLogicalExpr(expr: Logical): String {
+    override fun visitLogicalExpr(expr: Expr.Logical): String {
         TODO("Not yet implemented")
     }
 }
 
 fun main(args: Array<String>) {
-    val expr = Binary(
-        Unary(
+    val expr = Expr.Binary(
+        Expr.Unary(
             Token(TokenType.MINUS, "-", null, 1),
-            Literal(123)
+            Expr.Literal(123)
         ),
         Token(TokenType.STAR, "*", null, 1),
-        Grouping(
-            Literal(45.67)
+        Expr.Grouping(
+            Expr.Literal(45.67)
         )
     )
     println(visitExpr(expr, PrintVisitor))

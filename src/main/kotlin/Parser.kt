@@ -80,7 +80,7 @@ class Parser(
         val condition = if (!check(SEMICOLON)) {
             expression()
         } else {
-            Literal(true)
+            Expr.Literal(true)
         }
         consume(SEMICOLON, "Expect ';' after loop condition.")
 
@@ -118,8 +118,8 @@ class Parser(
             val equals = previous()
             val value = assignment()
 
-            if (expr is Variable) {
-                return Assign(expr.name, value)
+            if (expr is Expr.Variable) {
+                return Expr.Assign(expr.name, value)
             }
 
             error(equals, "Invalid assigment target.")
@@ -145,7 +145,7 @@ class Parser(
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             val operator = previous()
             val right = comparison()
-            expr = Binary(expr, operator, right)
+            expr = Expr.Binary(expr, operator, right)
         }
 
         return expr
@@ -157,7 +157,7 @@ class Parser(
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
             val operator = previous()
             val right = term()
-            expr = Binary(expr, operator, right)
+            expr = Expr.Binary(expr, operator, right)
         }
 
         return expr
@@ -169,7 +169,7 @@ class Parser(
         while (match(MINUS, PLUS)) {
             val operator = previous()
             val right = factor()
-            expr = Binary(expr, operator, right)
+            expr = Expr.Binary(expr, operator, right)
         }
 
         return expr
@@ -181,7 +181,7 @@ class Parser(
         while (match(SLASH, STAR)) {
             val operator = previous()
             val right = unary()
-            expr = Binary(expr, operator, right)
+            expr = Expr.Binary(expr, operator, right)
         }
 
         return expr
@@ -191,29 +191,29 @@ class Parser(
         if (match(BANG, MINUS)) {
             val operator = previous()
             val right = unary()
-            return Unary(operator, right)
+            return Expr.Unary(operator, right)
         }
 
         return primary()
     }
 
     private fun primary(): Expr {
-        if (match(FALSE)) return Literal(false)
-        if (match(TRUE)) return Literal(true)
-        if (match(NIL)) return Literal(null)
+        if (match(FALSE)) return Expr.Literal(false)
+        if (match(TRUE)) return Expr.Literal(true)
+        if (match(NIL)) return Expr.Literal(null)
 
         if (match(NUMBER, STRING)) {
-            return Literal(previous().literal)
+            return Expr.Literal(previous().literal)
         }
 
         if (match(IDENTIFIER)) {
-            return Variable(previous())
+            return Expr.Variable(previous())
         }
 
         if (match(LEFT_PAREN)) {
             val expr = expression()
             consume(RIGHT_PAREN, "Expect ')' after expression.")
-            return Grouping(expr)
+            return Expr.Grouping(expr)
         }
         throw error(peek(), "Expect expression.")
     }
@@ -224,7 +224,7 @@ class Parser(
         while (match(OR)) {
             val operator = previous()
             val right = and()
-            expr = Logical(expr, operator, right)
+            expr = Expr.Logical(expr, operator, right)
         }
 
         return expr
@@ -236,7 +236,7 @@ class Parser(
         while (match(AND)) {
             val operator = previous()
             val right = equality()
-            expr = Logical(expr, operator, right)
+            expr = Expr.Logical(expr, operator, right)
         }
 
         return expr

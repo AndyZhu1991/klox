@@ -20,13 +20,13 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         return visitExpr(expr, this)
     }
 
-    override fun visitLiteral(expr: Literal) = expr.value
+    override fun visitLiteral(expr: Expr.Literal) = expr.value
 
-    override fun visitGrouping(expr: Grouping): Any? {
+    override fun visitGrouping(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
     }
 
-    override fun visitUnary(expr: Unary): Any? {
+    override fun visitUnary(expr: Expr.Unary): Any? {
         val right = evaluate(expr.right)
         return when(expr.operator.type) {
             MINUS -> {
@@ -47,7 +47,7 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         return true
     }
 
-    override fun visitBinary(expr: Binary): Any? {
+    override fun visitBinary(expr: Expr.Binary): Any? {
         val left = evaluate(expr.left)
         val right = evaluate(expr.right)
 
@@ -97,17 +97,17 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         }
     }
 
-    override fun visitAssignExpr(expr: Assign): Any? {
+    override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
         environment.assign(expr.name, value)
         return value
     }
 
-    override fun visitVariable(expr: Variable): Any? {
+    override fun visitVariable(expr: Expr.Variable): Any? {
         return environment.get(expr.name)
     }
 
-    override fun visitLogicalExpr(expr: Logical): Any? {
+    override fun visitLogicalExpr(expr: Expr.Logical): Any? {
         return when (expr.operator.type) {
             OR  -> return isTruthy(evaluate(expr.left)) || isTruthy(evaluate(expr.right))
             AND -> return isTruthy(evaluate(expr.left)) && isTruthy(evaluate(expr.right))

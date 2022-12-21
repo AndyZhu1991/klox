@@ -2,13 +2,36 @@ import TokenType.*
 
 class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
 
-    private var environment = Environment()
+    public val globals = Environment()
+    private var environment = globals
+
+    init {
+        globals.define("clock", object : LoxCallable {
+            override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
+                return System.currentTimeMillis() / 1000.0
+            }
+
+            override fun arity(): Int = 0
+
+            override fun toString() = "<native fn>"
+        })
+    }
 
     fun interpret(stmts: List<Stmt>) {
         try {
             stmts.forEach(::execute)
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
+        }
+    }
+
+    fun executeBlock(block: List<Stmt>, environment: Environment) {
+        val prevEnv = this.environment
+        try {
+            this.environment = environment
+            block.forEach(::execute)
+        } finally {
+            this.environment = prevEnv
         }
     }
 
@@ -115,6 +138,24 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         }
     }
 
+    override fun visitCallExpr(expr: Expr.Call): Any? {
+        val callee = evaluate(expr.callee)
+        val arguments = expr.arguments.map(::evaluate)
+        if (callee !is LoxCallable) {
+            throw RuntimeError(expr.paren, "Can only call functions and classes.")
+        } else {
+            if (arguments.size != callee.arity()) {
+                throw RuntimeError(expr.paren, "Expected ${callee.arity()} arguments but got ${arguments.size}.")
+            }
+            return callee.call(this, arguments)
+        }
+    }
+
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        val value = stmt.value?.let { evaluate(it) }
+        throw Return(value)
+    }
+
     override fun visitEmptyStmt(stmt: Stmt.Empty) = Unit
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -132,11 +173,11 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
-        pushEnviroment()
+        pushEnvironment()
         try {
             stmt.stmts.forEach(::execute)
         } finally {
-            popEnviroment()
+            popEnvironment()
         }
     }
 
@@ -152,6 +193,10 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         while (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.body)
         }
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        environment.define(stmt.name.lexeme, LoxFunction(stmt))
     }
 
     private fun checkNumberOperand(operator: Token, operand: Any?) {
@@ -179,11 +224,11 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         return obj.toString()
     }
 
-    private fun pushEnviroment() {
+    private fun pushEnvironment() {
         this.environment = Environment(this.environment)
     }
 
-    private fun popEnviroment() {
+    private fun popEnvironment() {
         this.environment = this.environment.enclosing!!
     }
 }

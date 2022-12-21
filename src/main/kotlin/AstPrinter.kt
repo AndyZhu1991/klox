@@ -25,6 +25,10 @@ object PrintVisitor: ExprVisitor<String> {
         return "(Assign ${expr.value} to ${expr.name.lexeme})"
     }
 
+    override fun visitCallExpr(expr: Expr.Call): String {
+        return "${expr.callee}(${expr.arguments.joinToString(", ")})"
+    }
+
     private fun parenthesize(name: String, vararg exprs: Expr): String {
         return  "(" +
                 name + " " +

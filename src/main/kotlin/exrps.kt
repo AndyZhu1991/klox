@@ -33,6 +33,12 @@ sealed class Expr {
         val operator: Token,
         val right: Expr,
     ): Expr()
+
+    data class Call(
+        val callee: Expr,
+        val paren: Token,
+        val arguments: List<Expr>,
+    ): Expr()
 }
 
 
@@ -44,6 +50,7 @@ interface ExprVisitor<R> {
     fun visitVariable(expr: Expr.Variable): R
     fun visitAssignExpr(expr: Expr.Assign): R
     fun visitLogicalExpr(expr: Expr.Logical): R
+    fun visitCallExpr(expr: Expr.Call): R
 }
 
 fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
@@ -55,5 +62,6 @@ fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
         is Expr.Variable -> visitor.visitVariable(expr)
         is Expr.Assign -> visitor.visitAssignExpr(expr)
         is Expr.Logical -> visitor.visitLogicalExpr(expr)
+        is Expr.Call -> visitor.visitCallExpr(expr)
     }
 }

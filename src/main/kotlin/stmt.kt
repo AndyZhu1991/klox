@@ -6,6 +6,8 @@ sealed class Stmt {
     class Block(val stmts: List<Stmt>) : Stmt()
     class If(val condition: Expr, val thenBranch: Stmt, val elseBranch: Stmt?): Stmt()
     class While(val condition: Expr, val body: Stmt): Stmt()
+    class Function(val name: Token, val parameters: List<Token>, val body: List<Stmt>): Stmt()
+    class Return(val keyword: Token, val value: Expr?): Stmt()
 }
 
 interface StmtVisitor<R> {
@@ -16,6 +18,8 @@ interface StmtVisitor<R> {
     fun visitBlockStmt(stmt: Stmt.Block): R
     fun visitIfStmt(stmt: Stmt.If): R
     fun visitWhileStmt(stmt: Stmt.While): R
+    fun visitFunctionStmt(stmt: Stmt.Function): R
+    fun visitReturnStmt(stmt: Stmt.Return): R
 }
 
 fun <R> visitStmt(stmt: Stmt, visitor: StmtVisitor<R>): R {
@@ -27,5 +31,7 @@ fun <R> visitStmt(stmt: Stmt, visitor: StmtVisitor<R>): R {
         is Stmt.Block -> visitor.visitBlockStmt(stmt)
         is Stmt.If -> visitor.visitIfStmt(stmt)
         is Stmt.While -> visitor.visitWhileStmt(stmt)
+        is Stmt.Function -> visitor.visitFunctionStmt(stmt)
+        is Stmt.Return -> visitor.visitReturnStmt(stmt)
     }
 }

@@ -196,7 +196,8 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        environment.define(stmt.name.lexeme, LoxFunction(stmt))
+        val function = LoxFunction(stmt, environment)
+        environment.define(stmt.name.lexeme, function)
     }
 
     private fun checkNumberOperand(operator: Token, operand: Any?) {

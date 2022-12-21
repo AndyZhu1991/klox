@@ -7,9 +7,10 @@ interface LoxCallable {
 
 class LoxFunction(
     private val declaration: Stmt.Function,
+    private val closure: Environment,
 ) : LoxCallable {
     override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
-        val environment = Environment(interpreter.globals)
+        val environment = Environment(closure)
         declaration.parameters.forEachIndexed { index, token ->
             environment.define(token.lexeme, arguments[index])
         }

@@ -28,4 +28,20 @@ class Environment(
             throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
         }
     }
+
+    fun getAt(distance: Int, name: String): Any? {
+        return ancestor(distance)?.values?.get(name)
+    }
+
+    fun assignAt(distance: Int, name: Token, value: Any?) {
+        ancestor(distance)?.values?.put(name.lexeme, value)
+    }
+
+    private fun ancestor(distance: Int): Environment? {
+        return if (distance == 0) {
+            this
+        } else {
+            enclosing?.ancestor(distance - 1)
+        }
+    }
 }

@@ -44,9 +44,11 @@ class Lox {
     private fun run(source: String) {
         val scanner = Scanner(source)
         val tokens = scanner.tokens
+        val stmts = Parser(tokens).parse()
         if (hadError) return
-        val expr = Parser(tokens).parse()
-        interpreter.interpret(expr)
+        Resolver(interpreter).resolve(stmts)
+        if (hadError) return
+        interpreter.interpret(stmts)
     }
 
 

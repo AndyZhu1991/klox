@@ -148,4 +148,9 @@ class Resolver(
         }
         stmt.value?.let { resolve(it) }
     }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        declare(stmt.name)
+        define(stmt.name)
+    }
 }

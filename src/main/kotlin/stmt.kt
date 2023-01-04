@@ -8,6 +8,7 @@ sealed class Stmt {
     class While(val condition: Expr, val body: Stmt): Stmt()
     class Function(val name: Token, val parameters: List<Token>, val body: List<Stmt>): Stmt()
     class Return(val keyword: Token, val value: Expr?): Stmt()
+    class Class(val name: Token, val methods: List<Function>): Stmt()
 }
 
 interface StmtVisitor<R> {
@@ -20,6 +21,7 @@ interface StmtVisitor<R> {
     fun visitWhileStmt(stmt: Stmt.While): R
     fun visitFunctionStmt(stmt: Stmt.Function): R
     fun visitReturnStmt(stmt: Stmt.Return): R
+    fun visitClassStmt(stmt: Stmt.Class): R
 }
 
 fun <R> visitStmt(stmt: Stmt, visitor: StmtVisitor<R>): R {
@@ -33,5 +35,6 @@ fun <R> visitStmt(stmt: Stmt, visitor: StmtVisitor<R>): R {
         is Stmt.While -> visitor.visitWhileStmt(stmt)
         is Stmt.Function -> visitor.visitFunctionStmt(stmt)
         is Stmt.Return -> visitor.visitReturnStmt(stmt)
+        is Stmt.Class -> visitor.visitClassStmt(stmt)
     }
 }

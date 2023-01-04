@@ -28,8 +28,15 @@ class Parser(
 
     private fun declaration(): Stmt? {
         return try {
-            if (match(FUN)) return function("function")
-            if (match(VAR)) varDeclaration() else statement()
+            if (match(CLASS)) {
+                classDeclaration()
+            } else if (match(FUN)) {
+                function("function")
+            } else if (match(VAR)) {
+                varDeclaration()
+            } else {
+                statement()
+            }
         } catch (error: ParserError) {
             synchronize()
             null
@@ -138,6 +145,19 @@ class Parser(
         consume(LEFT_BRACE, "Expect '{' before $kind body.")
         val body = block()
         return Stmt.Function(name, parameters, body)
+    }
+
+    private fun classDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect class name.")
+        consume(LEFT_BRACE, "Expect '{' before class body.")
+
+        val methods = mutableListOf<Stmt.Function>()
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"))
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.")
+        return Stmt.Class(name, methods)
     }
 
     private fun assignment(): Expr {

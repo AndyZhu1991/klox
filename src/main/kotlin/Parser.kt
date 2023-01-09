@@ -169,6 +169,8 @@ class Parser(
 
             if (expr is Expr.Variable) {
                 return Expr.Assign(expr.name, value)
+            } else if (expr is Expr.Get) {
+                return Expr.Set(expr.obj, expr.name, value)
             }
 
             error(equals, "Invalid assigment target.")
@@ -252,6 +254,9 @@ class Parser(
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr)
+            } else if (match(DOT)) {
+                val name = consume(IDENTIFIER, "Expect property name after '.'.")
+                expr = Expr.Get(expr, name)
             } else {
                 break
             }

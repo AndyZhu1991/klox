@@ -39,6 +39,17 @@ sealed class Expr {
         val paren: Token,
         val arguments: List<Expr>,
     ): Expr()
+
+    data class Get(
+        val obj: Expr,
+        val name: Token,
+    ): Expr()
+
+    data class Set(
+        val obj: Expr,
+        val name: Token,
+        val value: Expr,
+    ): Expr()
 }
 
 
@@ -51,6 +62,8 @@ interface ExprVisitor<R> {
     fun visitAssignExpr(expr: Expr.Assign): R
     fun visitLogicalExpr(expr: Expr.Logical): R
     fun visitCallExpr(expr: Expr.Call): R
+    fun visitGetExpr(expr: Expr.Get): R
+    fun visitSetExpr(expr: Expr.Set): R
 }
 
 fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
@@ -63,5 +76,7 @@ fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
         is Expr.Assign -> visitor.visitAssignExpr(expr)
         is Expr.Logical -> visitor.visitLogicalExpr(expr)
         is Expr.Call -> visitor.visitCallExpr(expr)
+        is Expr.Get -> visitor.visitGetExpr(expr)
+        is Expr.Set -> visitor.visitSetExpr(expr)
     }
 }

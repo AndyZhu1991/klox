@@ -101,6 +101,10 @@ class Resolver(
         expr.arguments.forEach { resolve(it) }
     }
 
+    override fun visitGetExpr(expr: Expr.Get) {
+        resolve(expr.obj)
+    }
+
     override fun visitEmptyStmt(stmt: Stmt.Empty) {
         TODO("Not yet implemented")
     }

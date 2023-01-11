@@ -50,6 +50,10 @@ sealed class Expr {
         val name: Token,
         val value: Expr,
     ): Expr()
+
+    data class This(
+        val keyword: Token,
+    ): Expr()
 }
 
 
@@ -64,6 +68,7 @@ interface ExprVisitor<R> {
     fun visitCallExpr(expr: Expr.Call): R
     fun visitGetExpr(expr: Expr.Get): R
     fun visitSetExpr(expr: Expr.Set): R
+    fun visitThisExpr(expr: Expr.This): R
 }
 
 fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
@@ -78,5 +83,6 @@ fun <R> visitExpr(expr: Expr, visitor: ExprVisitor<R>): R {
         is Expr.Call -> visitor.visitCallExpr(expr)
         is Expr.Get -> visitor.visitGetExpr(expr)
         is Expr.Set -> visitor.visitSetExpr(expr)
+        is Expr.This -> visitor.visitThisExpr(expr)
     }
 }

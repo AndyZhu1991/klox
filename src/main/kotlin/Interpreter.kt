@@ -190,6 +190,10 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
         }
     }
 
+    override fun visitThisExpr(expr: Expr.This): Any? {
+        return lookupVariable(expr.keyword, expr)
+    }
+
     override fun visitReturnStmt(stmt: Stmt.Return) {
         val value = stmt.value?.let { evaluate(it) }
         throw Return(value)
@@ -235,13 +239,17 @@ class Interpreter : ExprVisitor<Any?>, StmtVisitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = LoxFunction(stmt, environment)
+        val function = LoxFunction(stmt, environment, false)
         environment.define(stmt.name.lexeme, function)
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
         environment.define(stmt.name.lexeme, null)
-        val klass = LoxClass(stmt.name.lexeme)
+        val methods = mutableMapOf<String, LoxFunction>()
+        stmt.methods.forEach {
+            methods[it.name.lexeme] = LoxFunction(it, environment, it.name.lexeme == "init")
+        }
+        val klass = LoxClass(stmt.name.lexeme, methods)
         environment.assign(stmt.name, klass)
     }
 

@@ -5,6 +5,7 @@ class Resolver(
 ): ExprVisitor<Unit>, StmtVisitor<Unit> {
     private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
     private var currentFunctionType = FunctionType.NONE
+    private var currentClass = ClassType.NONE
 
     fun resolve(stmt: Stmt) {
         visitStmt(stmt, this)
@@ -150,11 +151,49 @@ class Resolver(
         if (currentFunctionType == FunctionType.NONE) {
             Lox.error(stmt.keyword, "Can't return from top-level code.")
         }
-        stmt.value?.let { resolve(it) }
+        stmt.value?.let {
+            if (currentFunctionType == FunctionType.INITIALIZER) {
+                Lox.error(stmt.keyword, "Can't return a value from an initializer.")
+            }
+            resolve(it)
+        }
+    }
+
+    override fun visitSetExpr(expr: Expr.Set) {
+    }
+
+    override fun visitThisExpr(expr: Expr.This) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class.")
+            return
+        }
+        resolveLocal(expr, expr.keyword)
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass = currentClass
+        currentClass = ClassType.CLASS
         declare(stmt.name)
         define(stmt.name)
+        beginScope()
+        scopes.peek()["this"] = true
+        stmt.methods.forEach {
+            val declaration =
+            resolveFunction(it, FunctionType.METHOD)
+        }
+        endScope()
+        currentClass = enclosingClass
     }
+}
+
+enum class FunctionType {
+    NONE,
+    FUNCTION,
+    INITIALIZER,
+    METHOD,
+}
+
+enum class ClassType {
+    NONE,
+    CLASS,
 }

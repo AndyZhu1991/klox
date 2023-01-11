@@ -39,6 +39,14 @@ object PrintVisitor: ExprVisitor<String> {
     override fun visitLogicalExpr(expr: Expr.Logical): String {
         TODO("Not yet implemented")
     }
+
+    override fun visitGetExpr(expr: Expr.Get): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun visitSetExpr(expr: Expr.Set): String {
+        TODO("Not yet implemented")
+    }
 }
 
 fun main(args: Array<String>) {

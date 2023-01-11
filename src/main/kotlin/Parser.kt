@@ -290,6 +290,10 @@ class Parser(
             return Expr.Literal(previous().literal)
         }
 
+        if (match(THIS)) {
+            return Expr.This(previous())
+        }
+
         if (match(IDENTIFIER)) {
             return Expr.Variable(previous())
         }
